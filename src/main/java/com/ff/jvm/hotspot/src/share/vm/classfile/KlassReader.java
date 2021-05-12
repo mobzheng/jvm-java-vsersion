@@ -2,6 +2,9 @@ package com.ff.jvm.hotspot.src.share.vm.classfile;
 
 import lombok.Data;
 
+import java.io.BufferedReader;
+import java.nio.ByteBuffer;
+
 @Data
 public class KlassReader {
     private byte[] bytes;
@@ -30,11 +33,31 @@ public class KlassReader {
         return u2;
     }
 
-    public int readU2toSimple(){
+    public int readU2toSimple() {
         byte[] bytes = readU2();
-        return Integer.parseInt(String.valueOf(bytes[0] << 16 | bytes[1]),10);
+        int high = bytes[0];
+        int low = bytes[1];
+        return (high << 8 & 0xffff) | (low & 0xff);
     }
 
+    public int readU4toSimple() {
+        byte[] content = readU4();
+        int result = 0;
+        for (int i = 0; i < content.length; i++) {
+            result |= (content[i] & 0xff) << 8 * (content.length - 1 - i);
+        }
+        return result;
+    }
+
+    public long readU8toSimple() {
+        byte[] content = new byte[8];
+        readBytes(8, content);
+        int result = 0;
+        for (int i = 0; i < content.length; i++) {
+            result |= (content[i] & 0xff) << 8 * (content.length - 1 - i);
+        }
+        return result;
+    }
 
 
     public byte[] readU4() {
