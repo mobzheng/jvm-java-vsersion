@@ -30,9 +30,18 @@ public class KlassReader {
         return u2;
     }
 
+    public int readU2toSimple(){
+        byte[] bytes = readU2();
+        return Integer.parseInt(String.valueOf(bytes[0] << 16 | bytes[1]),10);
+    }
+
+
+
     public byte[] readU4() {
         byte[] u4 = new byte[4];
         readBytes(4, u4);
         return u4;
     }
+
+
 }
