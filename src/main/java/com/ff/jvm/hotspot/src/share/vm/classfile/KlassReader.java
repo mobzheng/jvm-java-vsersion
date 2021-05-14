@@ -37,7 +37,7 @@ public class KlassReader {
         byte[] bytes = readU2();
         int high = bytes[0];
         int low = bytes[1];
-        return (high << 8 & 0xffff) | (low & 0xff);
+        return (high & 0xff << 8) | (low & 0xff);
     }
 
     public int readU4toSimple() {
