@@ -40,11 +40,23 @@ public class KlassReader {
         return (high & 0xff << 8) | (low & 0xff);
     }
 
+    public static int byteArrayToInt(byte[] bytes) {
+        int value=0;
+
+        for(int i = 0; i < 4; i++) {
+            int shift= (3-i) * 8;
+            value +=(bytes[i] & 0xFF) << shift;
+        }
+
+        return value;
+    }
+
+
     public int readU4toSimple() {
         byte[] content = readU4();
         int result = 0;
         for (int i = 0; i < content.length; i++) {
-            result |= (content[i] & 0xff) << 8 * (content.length - 1 - i);
+            result |= (content[i] & 0xff) << (8 * (content.length - 1 - i));
         }
         return result;
     }

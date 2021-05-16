@@ -7,13 +7,15 @@ import lombok.Data;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Data
 public class BootClassLoader {
 
 
-    public static final String CLASS_PATH = System.getProperty("user.dir")+"/target/classes/";
+    public static final String CLASS_PATH = System.getProperty("user.dir") + "/target/classes/";
 
     public static final String SUF_FIX = ".class";
 
@@ -28,10 +30,10 @@ public class BootClassLoader {
         KlassReader reader = new KlassReader(bytes);
         Klass klass = new Klass(reader);
         System.out.println(klass);
-
     }
 
     public static void main(String[] args) {
         loadCLass(Test.class.getName());
     }
+
 }
