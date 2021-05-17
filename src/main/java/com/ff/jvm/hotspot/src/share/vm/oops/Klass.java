@@ -105,6 +105,7 @@ public class Klass {
                 int nameIndex = reader.readU2toSimple();
                 methodInfo.setNameIndex(nameIndex);
                 methodInfo.setMethodName(((String) this.constantPoolInfo.getDataMap().get(nameIndex)));
+
                 methodInfo.setDescriptorIndex(reader.readU2toSimple());
 
                 methodInfo.setAttributesCount(reader.readU2toSimple());

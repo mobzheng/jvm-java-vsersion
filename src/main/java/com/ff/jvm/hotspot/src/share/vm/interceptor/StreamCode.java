@@ -27,4 +27,10 @@ public class StreamCode {
         System.arraycopy(this.code, len, temp, 0, code.length - len);
         code = temp;
     }
+
+    public int readU2Simple() {
+        byte[] bytes = new byte[2];
+        readBytes(2, bytes);
+        return bytes[0] & 0xff << 16 | bytes[1] & 0xff;
+    }
 }

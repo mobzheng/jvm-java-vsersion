@@ -86,6 +86,7 @@ public class BootClassLoader {
                             break;
                         case Bytecodes.GETSTATIC:
                             log.info("GETSTATIC");
+                            int i = code.readU2Simple();
                             break;
                         case Bytecodes.INVOKEVIRTUAL:
                             log.info("INVOKEVIRTUAL");
