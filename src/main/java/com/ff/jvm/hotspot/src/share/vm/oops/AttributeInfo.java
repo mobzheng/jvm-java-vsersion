@@ -1,5 +1,6 @@
 package com.ff.jvm.hotspot.src.share.vm.oops;
 
+import com.ff.jvm.hotspot.src.share.vm.interceptor.StreamCode;
 import lombok.Data;
 
 /**
@@ -13,9 +14,10 @@ public class AttributeInfo {
     private int attrLength;
 
     // 用于存储klass的attribute
-    private byte[] container;
+    private StreamCode container = new StreamCode();
 
     public void initContainer() {
-        container = new byte[attrLength];
+        container.setCode(new byte[attrLength]);
+        container.setLength(attrLength);
     }
 }

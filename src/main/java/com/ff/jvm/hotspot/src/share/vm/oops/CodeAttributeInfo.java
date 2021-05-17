@@ -1,5 +1,6 @@
 package com.ff.jvm.hotspot.src.share.vm.oops;
 
+import com.ff.jvm.hotspot.src.share.vm.interceptor.StreamCode;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -20,7 +21,8 @@ public class CodeAttributeInfo {
 
     private int codeLength;
 
-    private byte[] code;
+    private StreamCode code = new StreamCode();
+
 
     private int exceptionTableLength;
 

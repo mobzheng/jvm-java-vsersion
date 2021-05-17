@@ -15,8 +15,10 @@ public class KlassReader {
 
 
     public void readBytes(int len, byte[] content) {
-        System.arraycopy(bytes, 0, content, 0, len);
-        System.arraycopy(bytes, len, bytes, 0, bytes.length - len);
+        byte[] temp = new byte[this.bytes.length - len];
+        System.arraycopy(this.bytes, 0, content, 0, len);
+        System.arraycopy(this.bytes, len, temp, 0, this.bytes.length - len);
+        bytes = temp;
     }
 
 

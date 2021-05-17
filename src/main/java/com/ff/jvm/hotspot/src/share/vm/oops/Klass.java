@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -86,7 +87,7 @@ public class Klass {
 
             byte[] content = new byte[attributeInfo.getAttrLength()];
             reader.readBytes(content.length, content);
-            attributeInfo.setContainer(content);
+            attributeInfo.getContainer().setCode(content);
 
             this.attributeInfos.add(attributeInfo);
         }
@@ -126,7 +127,7 @@ public class Klass {
 
                         byte[] code = new byte[codeAttributeInfo.getCodeLength()];
                         reader.readBytes(code.length, code);
-                        codeAttributeInfo.setCode(code);
+                        codeAttributeInfo.getCode().setCode(code);
 
                         codeAttributeInfo.setExceptionTableLength(reader.readU2toSimple());
 
@@ -281,19 +282,15 @@ public class Klass {
             log.info("\tindex\t#{}", i);
             switch (index) {
                 case ConstantPool.JVM_CONSTANT_Utf8:
-                    try {
-                        this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Utf8;
-                        // 获取字符串的长度
-                        int strLength = reader.readU2toSimple();
-                        // 获取字符串
-                        byte[] strBytes = new byte[strLength];
-                        reader.readBytes(strLength, strBytes);
-                        String str = new String(strBytes, "utf-8");
-                        constantPoolInfo.getDataMap().put(i, str);
-                        log.info("获取到的字符串长度[{}],内容[{}]", strLength, str);
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
+                    this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Utf8;
+                    // 获取字符串的长度
+                    int strLength = reader.readU2toSimple();
+                    // 获取字符串
+                    byte[] strBytes = new byte[strLength];
+                    reader.readBytes(strLength, strBytes);
+                    String str = new String(strBytes, StandardCharsets.UTF_8);
+                    constantPoolInfo.getDataMap().put(i, str);
+                    log.info("获取到的字符串长度[{}],内容[{}]", strLength, str);
                     break;
                 case ConstantPool.JVM_CONSTANT_Integer:
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Integer;
@@ -306,7 +303,7 @@ public class Klass {
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Class;
                     int classInfo = reader.readU2toSimple();
                     constantPoolInfo.getDataMap().put(i, classInfo);
-                    log.info("class[#{},#{}]", classInfo);
+                    log.info("class[{}]", classInfo);
                     break;
                 case ConstantPool.JVM_CONSTANT_Double:
 //                    byte[] doubleInfo = new byte[8];
