@@ -2,7 +2,6 @@ package com.ff.jvm.hotspot.src.share.vm.runtime;
 
 import com.ff.jvm.hotspot.src.share.vm.oops.MethodInfo;
 import lombok.Data;
-import sun.jvm.hotspot.runtime.StackValueCollection;
 
 /**
  * Created By ziya

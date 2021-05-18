@@ -3,21 +3,25 @@ package com.ff.jvm.hotspot.src.share.vm.classfile;
 import com.ff.exampl.Test;
 import com.ff.jvm.hotspot.src.share.vm.interceptor.Bytecodes;
 import com.ff.jvm.hotspot.src.share.vm.interceptor.StreamCode;
+import com.ff.jvm.hotspot.src.share.vm.memory.MethodInvokeParser;
 import com.ff.jvm.hotspot.src.share.vm.oops.CodeAttributeInfo;
 import com.ff.jvm.hotspot.src.share.vm.oops.ConstantPool;
 import com.ff.jvm.hotspot.src.share.vm.oops.Klass;
 import com.ff.jvm.hotspot.src.share.vm.oops.MethodInfo;
 import com.ff.jvm.hotspot.src.share.vm.runtime.JavaThread;
 import com.ff.jvm.hotspot.src.share.vm.runtime.JavaVFrame;
-import com.ff.jvm.hotspot.src.share.vm.runtime.VFrame;
-import com.sun.xml.internal.ws.api.ha.StickyFeature;
+import com.ff.jvm.hotspot.src.share.vm.runtime.StackValue;
+import com.ff.jvm.hotspot.src.share.vm.utils.BasicType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import sun.jvm.hotspot.runtime.Bytes;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 @Slf4j
 @Data
@@ -56,7 +60,7 @@ public class BootClassLoader {
                 javaThread.getStack().push(javaVFrame);
                 log.info("压栈");
                 // 获取栈帧
-                JavaVFrame frame = (JavaVFrame)javaThread.getStack().peek();
+                JavaVFrame frame = (JavaVFrame) javaThread.getStack().peek();
                 StreamCode code = attributeInfo.getCode();
                 Klass belongKlass = method.getBelongKlass();
                 ConstantPool constantPoolInfo = belongKlass.getConstantPoolInfo();
@@ -74,6 +78,7 @@ public class BootClassLoader {
                                 case ConstantPool.JVM_CONSTANT_String:
                                     int strIndex = (int) constantPoolInfo.getDataMap().get(operno);
                                     String content = (String) constantPoolInfo.getDataMap().get(strIndex);
+                                    frame.getStack().push(new StackValue(BasicType.T_OBJECT, content));
                                     log.info("JVM_CONSTANT_String");
                                     break;
                                 case ConstantPool.JVM_CONSTANT_Double:
@@ -88,13 +93,22 @@ public class BootClassLoader {
                             break;
                         case Bytecodes.INVOKESPECIAL:
                             log.info("INVOKESPECIAL");
-                            int methodIndex = code.readU2Simple();
-                            byte[] methodInfo = (byte[]) constantPoolInfo.getDataMap().get(methodIndex);
-                            int classIndex = Byte.toUnsignedInt(methodInfo[0]);
-                            int signInfoIndex = Byte.toUnsignedInt(methodInfo[1]);
-                            byte[] signInfo = (byte[]) constantPoolInfo.getDataMap().get(signInfoIndex);
-                            int filedIndex = Byte.toUnsignedInt(signInfo[0]);
-                            int returnTypeIndex = Byte.toUnsignedInt(signInfo[1]);
+                            c = code.readU2Simple();
+                            String classNameByFieldInfo1 = constantPoolInfo.getClassNameByFieldInfo(c);
+                            String fieldName1 = constantPoolInfo.getFieldName(c);
+                            try {
+                                Class<?> targetClass = Class.forName(classNameByFieldInfo1.replace("/", "."));
+                                Field field = targetClass.getDeclaredField(fieldName1);
+                                Object val = field.get(null);
+                                frame.getStack().push(new StackValue(BasicType.T_OBJECT, val));
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (NoSuchFieldException e) {
+                                e.printStackTrace();
+                            }
+
 
                             break;
                         case Bytecodes.RETURN:
@@ -102,41 +116,48 @@ public class BootClassLoader {
                             break;
                         case Bytecodes.GETSTATIC:
                             log.info("GETSTATIC");
-                            int i = code.readU2Simple();
-                            log.info("分析参数");
+                            c = code.readU2Simple();
+                            String classNameByFieldInfo = constantPoolInfo.getClassNameByFieldInfo(c);
+                            String fieldName = constantPoolInfo.getFieldName(c);
+                            if (classNameByFieldInfo.startsWith("java")) {
+                                try {
+                                    Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
+                                    Field field = targetClass.getDeclaredField(fieldName);
+                                    Object val = field.get(null);
+                                    frame.getStack().push(new StackValue(BasicType.T_OBJECT, val));
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                } catch (NoSuchFieldException e) {
+                                    e.printStackTrace();
+                                }
+
+
+                            }
                             break;
                         case Bytecodes.INVOKEVIRTUAL:
                             log.info("INVOKEVIRTUAL");
-//                            int invokevirtualmethodIndex = code.readU2Simple();
-//                            byte[] invokevirtualmethodInfo = (byte[]) constantPoolInfo.getDataMap().get(invokevirtualmethodIndex);
-//                            int invokevirtualclassIndex = Byte.toUnsignedInt(invokevirtualmethodInfo[0]);
-//                            int invokevirtualsignInfoIndex = Byte.toUnsignedInt(invokevirtualmethodInfo[1]);
-//                            byte[] invokevirtualsignInfo = (byte[]) constantPoolInfo.getDataMap().get(invokevirtualsignInfoIndex);
-//                            int invokevirtualfiledIndex = Byte.toUnsignedInt(invokevirtualsignInfo[0]);
-//                            int invokevirtualreturnTypeIndex = Byte.toUnsignedInt(invokevirtualsignInfo[1]);
-//
-//
-//                            String targetClass = ((String) constantPoolInfo.getDataMap().get(constantPoolInfo.getDataMap().get(invokevirtualclassIndex)));
-//                            String targetMethodName = (String)constantPoolInfo.getDataMap().get(invokevirtualfiledIndex);
-//                            String targetMethodDescript = ((String) constantPoolInfo.getDataMap().get(invokevirtualreturnTypeIndex));
-
-                             c = code.readU2Simple();
-                            String classNameByFieldInfo = (String) constantPoolInfo.getClassNameByFieldInfo(c);
-                            String fieldName = (String) constantPoolInfo.getFieldName(c);
+                            c = code.readU2Simple();
+//                            String classNameByFieldInfo = (String) constantPoolInfo.getClassNameByFieldInfo(c);
+                            String infoFieldName = (String) constantPoolInfo.getFieldName(c);
                             String descriptorNameByMethodInfo = (String) constantPoolInfo.getDescriptorNameByMethodInfo(c);
-                            log.info("");
-//                            log.info("执行{}类方法{},{}", targetClass, targetMethodName, targetMethodDescript);
-//                            // 执行方法
-//                            if (targetClass.startsWith("java")) {
-//                                // jdk的方法 ，反射执行
-//                                targetClass = targetClass.replace(".", "/");
-//                                try {
-//                                    Class<?> target = Class.forName(targetClass);
-//
-////                                    target.getDeclaredField()
-//                                } catch (ClassNotFoundException e) {
-//                                }
-//                            }
+//                            执行方法
+                            MethodInvokeParser methodInvokeParser = new MethodInvokeParser(descriptorNameByMethodInfo);
+                            methodInvokeParser.parseMethod();
+                            methodInvokeParser.parseParamsVal(frame);
+                            Object obj = frame.getStack().pop().getObject();
+                            Method invokeMethod = null;
+                            try {
+                                invokeMethod = obj.getClass().getMethod(infoFieldName, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getKlass).toArray(Class[]::new));
+                                invokeMethod.invoke(obj, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getVal).toArray(Object[]::new));
+                            } catch (NoSuchMethodException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            }
                             break;
                     }
 
