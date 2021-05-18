@@ -86,53 +86,78 @@ public class ConstantPool {
         return (String) getDataMap().get(index);
     }
 
+//    public String getClassNameByFieldInfo(int index) {
+//        // 获取Class信息在常量池中的index
+//        int data = (int) getDataMap().get(index);
+//        int classIndex = data >> 16;
+//
+//        // 获取Class全限定名的index
+//        int classNameIndex = (int) getDataMap().get(classIndex);
+//
+//        return (String) getDataMap().get(classNameIndex);
+//    }
+
     public String getClassNameByFieldInfo(int index) {
-        // 获取Class信息在常量池中的index
-        int data = (int) getDataMap().get(index);
-        int classIndex = data >> 16;
 
-        // 获取Class全限定名的index
-        int classNameIndex = (int) getDataMap().get(classIndex);
+        byte[] bytes = (byte[]) getDataMap().get(index);
+        int i = (int) getDataMap().get(Byte.toUnsignedInt(bytes[0]));
 
-        return (String) getDataMap().get(classNameIndex);
+        return ((String) getDataMap().get(i));
     }
 
-    public String getClassNameByMethodInfo(int index) {
-        return getClassNameByFieldInfo(index);
+//    public String getFieldName(int index) {
+//        // 获取NameAndType在常量池中的index
+//        int data = (int) getDataMap().get(index);
+//        int i = data & 0xFF;
+//
+//        int nameAndType = (int) getDataMap().get(i);
+//        i = nameAndType >> 16;
+//
+//        return (String) getDataMap().get(i);
+//    }
+
+    public String getFieldName(int index)
+    {
+        // 因为本常量池中存储的是原生byte[] 并没有转换到int所以不能使用位运算进行取值
+        byte[] bytes = (byte[]) getDataMap().get(index);
+        byte[] fieldBytes = ((byte[]) getDataMap().get(Byte.toUnsignedInt(bytes[1])));
+        return (String)getDataMap().get(Byte.toUnsignedInt(fieldBytes[0]));
     }
 
-    public String getFieldName(int index) {
-        // 获取NameAndType在常量池中的index
-        int data = (int) getDataMap().get(index);
-        int i = data & 0xFF;
+//    public String getMethodNameByMethodInfo(int operand) {
+//        // 获取Methodinfo在常量池中的index
+//        int i = (int) getDataMap().get(operand);
+//        int nameAndTypeIndex = i & 0xff;
+//
+//        // 获取NameAndType的值
+//        int data = (int) getDataMap().get(nameAndTypeIndex);
+//        i = data >> 16;
+//
+//        return (String) getDataMap().get(i);
+//    }
 
-        int nameAndType = (int) getDataMap().get(i);
-        i = nameAndType >> 16;
+    public String getMethodNameByMethodInfo(int index){
+        byte[] bytes = (byte[]) getDataMap().get(index);
+        return ((String) getDataMap().get(Byte.toUnsignedInt(bytes[0])));
 
-        return (String) getDataMap().get(i);
     }
 
-    public String getMethodNameByMethodInfo(int operand) {
-        // 获取Methodinfo在常量池中的index
-        int i = (int) getDataMap().get(operand);
-        int nameAndTypeIndex = i & 0xff;
+//    public String getDescriptorNameByMethodInfo(int operand) {
+//        // 获取Methodinfo在常量池中的index
+//        int i = (int) getDataMap().get(operand);
+//        int nameAndTypeIndex = i & 0xff;
+//
+//        // 获取NameAndType的值
+//        int data = (int) getDataMap().get(nameAndTypeIndex);
+//        i = data & 0xFF;
+//
+//        return (String) getDataMap().get(i);
+//    }
 
-        // 获取NameAndType的值
-        int data = (int) getDataMap().get(nameAndTypeIndex);
-        i = data >> 16;
 
-        return (String) getDataMap().get(i);
-    }
-
-    public String getDescriptorNameByMethodInfo(int operand) {
-        // 获取Methodinfo在常量池中的index
-        int i = (int) getDataMap().get(operand);
-        int nameAndTypeIndex = i & 0xff;
-
-        // 获取NameAndType的值
-        int data = (int) getDataMap().get(nameAndTypeIndex);
-        i = data & 0xFF;
-
-        return (String) getDataMap().get(i);
+    public String getDescriptorNameByMethodInfo(int index) {
+        byte[] i = (byte[]) getDataMap().get(index);
+        byte[] bytes = (byte[]) getDataMap().get(Byte.toUnsignedInt(i[1]));
+        return ((String) getDataMap().get(Byte.toUnsignedInt(bytes[1])));
     }
 }

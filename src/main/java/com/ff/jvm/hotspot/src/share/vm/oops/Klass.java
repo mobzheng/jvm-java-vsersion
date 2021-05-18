@@ -372,7 +372,7 @@ public class Klass {
             }
         }
 
-        postParseConstantPool(constantPoolInfo.getDataMap());
+//        postParseConstantPool(constantPoolInfo.getDataMap());
         log.info("常量池解析完毕[{}]", JSONUtil.toJsonStr(constantPoolInfo.getDataMap()));
     }
 
