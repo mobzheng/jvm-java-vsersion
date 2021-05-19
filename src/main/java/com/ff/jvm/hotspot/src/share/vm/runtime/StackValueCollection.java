@@ -1,6 +1,7 @@
 package com.ff.jvm.hotspot.src.share.vm.runtime;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,7 @@ import java.util.Stack;
  * 2021/3/29
  */
 @Data
+@Slf4j
 public class StackValueCollection {
 
     private Logger logger = LoggerFactory.getLogger(StackValueCollection.class);
@@ -25,11 +27,14 @@ public class StackValueCollection {
     }
 
     public void push(StackValue value) {
+        log.info("push[{}}=====>size[{}]",  value,container.size());
         getContainer().push(value);
     }
 
     public StackValue pop() {
-        return getContainer().pop();
+        StackValue val = getContainer().pop();
+        log.info("pop[{}}=====>size[{}]",  val,container.size());
+        return val;
     }
 
     public StackValue peek() {

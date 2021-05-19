@@ -55,10 +55,11 @@ public class BootClassLoader {
         for (MethodInfo method : klass.getMethods()) {
             String methodName = method.getMethodName();
             log.info("找到方法[{}]", methodName);
-            for (CodeAttributeInfo attributeInfo : method.getAttributes()) {
+            for (int i = 0; i < method.getAttributes().length; i++) {
+                CodeAttributeInfo attributeInfo = method.getAttributes()[i];
                 JavaVFrame javaVFrame = new JavaVFrame(attributeInfo.getMaxLocals(), method);
                 javaThread.getStack().push(javaVFrame);
-                log.info("压栈");
+                log.info("压入第{}个栈帧，总共{}个栈帧", i,javaThread.getStack().size());
                 // 获取栈帧
                 JavaVFrame frame = (JavaVFrame) javaThread.getStack().peek();
                 StreamCode code = attributeInfo.getCode();
@@ -94,11 +95,11 @@ public class BootClassLoader {
                         case Bytecodes.INVOKESPECIAL:
                             log.info("INVOKESPECIAL");
                             c = code.readU2Simple();
-                            String classNameByFieldInfo1 = constantPoolInfo.getClassNameByFieldInfo(c);
-                            String fieldName1 = constantPoolInfo.getFieldName(c);
+                            String classNameByFieldInfo = constantPoolInfo.getClassNameByFieldInfo(c);
+                            String fieldName = constantPoolInfo.getFieldName(c);
                             try {
-                                Class<?> targetClass = Class.forName(classNameByFieldInfo1.replace("/", "."));
-                                Field field = targetClass.getDeclaredField(fieldName1);
+                                Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
+                                Field field = targetClass.getDeclaredField(fieldName);
                                 Object val = field.get(null);
                                 frame.getStack().push(new StackValue(BasicType.T_OBJECT, val));
                             } catch (ClassNotFoundException e) {
@@ -108,17 +109,17 @@ public class BootClassLoader {
                             } catch (NoSuchFieldException e) {
                                 e.printStackTrace();
                             }
-
-
                             break;
                         case Bytecodes.RETURN:
                             log.info("RETURN");
+                            javaThread.getStack().pop();
+                            log.info("弹出栈帧，剩余{}",javaThread.getStack().size());
                             break;
                         case Bytecodes.GETSTATIC:
                             log.info("GETSTATIC");
                             c = code.readU2Simple();
-                            String classNameByFieldInfo = constantPoolInfo.getClassNameByFieldInfo(c);
-                            String fieldName = constantPoolInfo.getFieldName(c);
+                            classNameByFieldInfo = constantPoolInfo.getClassNameByFieldInfo(c);
+                            fieldName = constantPoolInfo.getFieldName(c);
                             if (classNameByFieldInfo.startsWith("java")) {
                                 try {
                                     Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
@@ -158,6 +159,44 @@ public class BootClassLoader {
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
                             }
+                            break;
+                        case Bytecodes.INVOKESTATIC:
+                            log.info("INVOKESTATIC");
+                            c = code.readU2Simple();
+                            fieldName = constantPoolInfo.getFieldName(c);
+                            classNameByFieldInfo = constantPoolInfo.getClassNameByFieldInfo(c);
+                            descriptorNameByMethodInfo = constantPoolInfo.getDescriptorNameByMethodInfo(c);
+                            methodInvokeParser = new MethodInvokeParser(descriptorNameByMethodInfo);
+                            methodInvokeParser.parseMethod();
+                            methodInvokeParser.parseParamsVal(frame);
+                            try {
+                                Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
+                                Method targetMethod = targetClass.getDeclaredMethod(fieldName, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getKlass).toArray(Class[]::new));
+                                Object resultVal = targetMethod.invoke(null, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getVal).toArray(Object[]::new));
+                                frame.getStack().push(new StackValue(BasicType.T_OBJECT, resultVal));
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (NoSuchMethodException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+
+                        case Bytecodes.ICONST_1:
+                            log.info("ICONST_1");
+                            frame.getStack().push(new StackValue(BasicType.T_INT, Integer.valueOf(1)));
+                            break;
+                        case Bytecodes.ICONST_2:
+                            log.info("ICONST_2");
+                            frame.getStack().push(new StackValue(BasicType.T_INT, Integer.valueOf(2)));
+                            break;
+                        case Bytecodes.IRETURN:
+                            log.info("IRETURN");
+                            javaThread.getStack().pop();
+                            log.info("弹出栈帧，剩余{}",javaThread.getStack().size());
                             break;
                     }
 

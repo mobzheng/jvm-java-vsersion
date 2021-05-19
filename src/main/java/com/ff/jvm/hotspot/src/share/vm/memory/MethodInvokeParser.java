@@ -4,6 +4,11 @@ import com.ff.jvm.hotspot.src.share.vm.runtime.JavaVFrame;
 import com.ff.jvm.hotspot.src.share.vm.utils.BasicType;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Data
 public class MethodInvokeParser {
 
@@ -18,33 +23,68 @@ public class MethodInvokeParser {
     }
 
     public void parseMethod() {
-        methodDescription = methodDescription.substring(1);
-        String[] des = methodDescription.split("\\)");
-        parseParameters(des[0]);
-        parseReturn(des[1]);
+        int endIndex = methodDescription.indexOf(BasicType.JVM_SIGNATURE_ENDFUNC);
+        parseParameters(methodDescription.substring(0, endIndex + 1));
+        parseReturn(methodDescription.substring(endIndex + 1));
     }
 
     private void parseParameters(String parameters) {
-        String[] split = parameters.split(";");
-        this.parameterDescs = new ParameterDesc[split.length];
-        for (int i = 0; i < split.length; i++) {
-            String str = split[i];
-
-            char preFix = str.charAt(0);
-
-            switch (preFix) {
+        if (parameters.charAt(0) != BasicType.JVM_SIGNATURE_FUNC) {
+            throw new Error("参数格式不支持");
+        }
+        List<ParameterDesc> parameterList = new ArrayList<>();
+        for (int j = 0; j < parameters.length(); j++) {
+            char c = parameters.charAt(j);
+            switch (c) {
+                case BasicType.JVM_SIGNATURE_ARRAY:
+                    break;
+                case BasicType.JVM_SIGNATURE_BYTE:
+                    parameterList.add(ParameterDesc.builder().klass(byte.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_CHAR:
+                    parameterList.add(ParameterDesc.builder().klass(char.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
                 case BasicType.JVM_SIGNATURE_CLASS:
+                    StringBuilder sb = new StringBuilder();
+                    while ((c = parameters.charAt(++j)) != BasicType.JVM_SIGNATURE_ENDCLASS) {
+                        sb.append(c);
+                    }
                     // 引用类型
-                    String paramClass = str.substring(1).replace("/", ".");
+                    String paramClass = sb.toString().replace("/", ".");
                     try {
                         Class aClass = Class.forName(paramClass);
-                        this.parameterDescs[i] = ParameterDesc.builder().klass(aClass).type(BasicType.JVM_SIGNATURE_CLASS).build();
+                        parameterList.add(ParameterDesc.builder().klass(aClass).type(BasicType.JVM_SIGNATURE_CLASS).build());
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                     }
                     break;
+                case BasicType.JVM_SIGNATURE_ENDCLASS:
+                    break;
+                case BasicType.JVM_SIGNATURE_ENUM:
+                    break;
+                case BasicType.JVM_SIGNATURE_FLOAT:
+                    parameterList.add(ParameterDesc.builder().klass(float.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_DOUBLE:
+                    parameterList.add(ParameterDesc.builder().klass(double.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_INT:
+                    parameterList.add(ParameterDesc.builder().klass(int.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_LONG:
+                    parameterList.add(ParameterDesc.builder().klass(long.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_SHORT:
+                    parameterList.add(ParameterDesc.builder().klass(short.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_VOID:
+                    parameterList.add(ParameterDesc.builder().klass(void.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
+                case BasicType.JVM_SIGNATURE_BOOLEAN:
+                    parameterList.add(ParameterDesc.builder().klass(boolean.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
+                    break;
             }
-
+            parameterDescs = parameterList.toArray(new ParameterDesc[parameterList.size()]);
         }
     }
 
@@ -58,7 +98,9 @@ public class MethodInvokeParser {
     }
 
     private void parseReturn(String returnDescription) {
+        if (returnDescription.charAt(0) == BasicType.JVM_SIGNATURE_INT) {
 
+        }
     }
 
     @Data
