@@ -90,7 +90,9 @@ public class MethodInvokeParser {
 
 
     public void parseParamsVal(JavaVFrame frame) {
-        for (int i = 0; i < parameterDescs.length; i++) {
+
+        // 使用栈结构，压栈顺序是参数顺序，弹出是反方向的
+        for (int i = parameterDescs.length - 1; i >= 0; i--) {
             ParameterDesc parameterDesc = parameterDescs[i];
             Object val = frame.getStack().pop().getObject();
             parameterDesc.setVal(val);

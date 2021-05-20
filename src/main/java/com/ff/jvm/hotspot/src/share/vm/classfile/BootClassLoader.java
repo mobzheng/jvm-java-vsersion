@@ -193,6 +193,15 @@ public class BootClassLoader {
                             log.info("ICONST_2");
                             frame.getStack().push(new StackValue(BasicType.T_INT, Integer.valueOf(2)));
                             break;
+                        case Bytecodes.BIPUSH:
+                            log.info("BIPUSH");
+                            frame.getStack().push(new StackValue(BasicType.T_INT, Integer.valueOf(code.redU1())));
+                            break;
+
+                        case Bytecodes.SIPUSH:
+                            log.info("SIPUSH");
+                            frame.getStack().push(new StackValue(BasicType.T_INT, Integer.valueOf(code.readU2toShortSimple())));
+                            break;
                         case Bytecodes.IRETURN:
                             log.info("IRETURN");
                             javaThread.getStack().pop();

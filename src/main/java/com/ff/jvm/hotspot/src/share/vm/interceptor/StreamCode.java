@@ -31,6 +31,16 @@ public class StreamCode {
     public int readU2Simple() {
         byte[] bytes = new byte[2];
         readBytes(2, bytes);
-        return bytes[0] & 0xff << 16 | bytes[1] & 0xff;
+        return (bytes[0] & 0xff) << 16 | bytes[1] & 0xff;
+    }
+
+    /**
+     * 针对sipush
+     * @return
+     */
+    public int readU2toShortSimple(){
+        byte[] bytes = new byte[2];
+        readBytes(2, bytes);
+        return (bytes[0] & 0xff) << 8 | bytes[1] & 0xff;
     }
 }
