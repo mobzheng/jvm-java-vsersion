@@ -43,11 +43,11 @@ public class KlassReader {
     }
 
     public static int byteArrayToInt(byte[] bytes) {
-        int value=0;
+        int value = 0;
 
-        for(int i = 0; i < 4; i++) {
-            int shift= (3-i) * 8;
-            value +=(bytes[i] & 0xFF) << shift;
+        for (int i = 0; i < 4; i++) {
+            int shift = (3 - i) * 8;
+            value += (bytes[i] & 0xFF) << shift;
         }
 
         return value;
@@ -63,14 +63,20 @@ public class KlassReader {
         return result;
     }
 
-    public long readU8toSimple() {
+    public double readU8toDouble() {
         byte[] content = new byte[8];
         readBytes(8, content);
-        int result = 0;
-        for (int i = 0; i < content.length; i++) {
-            result |= (content[i] & 0xff) << 8 * (content.length - 1 - i);
-        }
-        return result;
+        ByteBuffer buffer = ByteBuffer.wrap(content, 0, 8);
+
+        return buffer.getDouble();
+    }
+
+    public long readU8toLong() {
+        byte[] content = new byte[8];
+        readBytes(8, content);
+        ByteBuffer buffer = ByteBuffer.wrap(content, 0, 8);
+
+        return buffer.getLong();
     }
 
 

@@ -5,7 +5,7 @@ public class Test {
 //    public static final String name = "sak";
 
     public static void main(String[] args) {
-        System.out.println(add(10, 1201));
+        add(10.1, 1201.2);
         System.out.println("hello world");
     }
 
@@ -14,10 +14,18 @@ public class Test {
         return a + b;
     }
 
+    public static void add(double a, double b) {
+        System.out.println(a + b);
+    }
+
+    public int add(int a) {
+        return a + 1;
+    }
+
 
 //    public static void add(double a, double b) {
 //        double c = a + b;
 //    }
 
-    
+
 }

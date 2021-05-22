@@ -310,7 +310,7 @@ public class Klass {
 //                    byte[] doubleInfo = new byte[8];
 //                    reader.readBytes(8,doubleInfo);
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Double;
-                    long doubleInfo = reader.readU8toSimple();
+                    double doubleInfo = reader.readU8toDouble();
                     constantPoolInfo.getDataMap().put(i, doubleInfo);
                     log.info("double[{}]", doubleInfo);
                     break;
@@ -340,7 +340,7 @@ public class Klass {
 //                    byte[] longInfo = new byte[8];
 //                    reader.readBytes(8,longInfo);
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Long;
-                    long constantLong = reader.readU8toSimple();
+                    long constantLong = reader.readU8toLong();
                     constantPoolInfo.getDataMap().put(i, constantLong);
                     log.info("long[{}]", constantLong);
                     break;
