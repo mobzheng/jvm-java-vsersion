@@ -11,6 +11,7 @@ import com.ff.jvm.hotspot.src.share.vm.oops.MethodInfo;
 import com.ff.jvm.hotspot.src.share.vm.runtime.JavaThread;
 import com.ff.jvm.hotspot.src.share.vm.runtime.JavaVFrame;
 import com.ff.jvm.hotspot.src.share.vm.runtime.StackValue;
+import com.ff.jvm.hotspot.src.share.vm.runtime.Threads;
 import com.ff.jvm.hotspot.src.share.vm.utils.BasicType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 
 @Slf4j
 @Data
@@ -52,12 +54,15 @@ public class BootClassLoader {
     public static void main(String[] args) {
         Klass klass = loadMainClass(Test.class.getName());
         JavaThread javaThread = new JavaThread();
+        Threads.getThreadList().add(javaThread);
+        Threads.setCurrentThread(javaThread);
         MethodInfo main = null;
         for (MethodInfo method : klass.getMethods()) {
             String methodName = method.getMethodName();
             log.info("找到方法[{}]", methodName);
             if ("main".equals(methodName)) {
                 main = method;
+                break;
             }
         }
         invokeMethod(javaThread, main);
@@ -178,20 +183,27 @@ public class BootClassLoader {
                         methodInvokeParser = new MethodInvokeParser(descriptorNameByMethodInfo);
                         methodInvokeParser.parseMethod();
                         methodInvokeParser.parseParamsVal(frame);
-                        try {
-                            Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
-                            Method targetMethod = targetClass.getDeclaredMethod(fieldName, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getKlass).toArray(Class[]::new));
-                            Object resultVal = targetMethod.invoke(null, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getVal).toArray(Object[]::new));
-                            frame.getStack().push(new StackValue(BasicType.T_OBJECT, resultVal));
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (NoSuchMethodException e) {
-                            e.printStackTrace();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InvocationTargetException e) {
-                            e.printStackTrace();
+                        if (classNameByFieldInfo.startsWith("java")) {
+                            try {
+                                Class<?> targetClass = Class.forName(classNameByFieldInfo.replace("/", "."));
+                                Method targetMethod = targetClass.getDeclaredMethod(fieldName, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getKlass).toArray(Class[]::new));
+                                Object resultVal = targetMethod.invoke(null, Arrays.stream(methodInvokeParser.getParameterDescs()).map(MethodInvokeParser.ParameterDesc::getVal).toArray(Object[]::new));
+                                frame.getStack().push(new StackValue(BasicType.T_OBJECT, resultVal));
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (NoSuchMethodException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            Klass klass = loadCLass(classNameByFieldInfo);
+                            MethodInfo methodInfo = getmethodByMethoId(klass, fieldName, descriptorNameByMethodInfo);
+                            invokeStaticMethod(methodInfo);
                         }
+
                         break;
 
                     case Bytecodes.ICONST_1:
@@ -216,10 +228,32 @@ public class BootClassLoader {
                         javaThread.getStack().pop();
                         log.info("弹出栈帧，剩余{}", javaThread.getStack().size());
                         break;
+                    case Bytecodes.LDC2_W:
+                        log.info("LDC2_W");
+                        frame.getStack().push(new StackValue(BasicType.T_DOUBLE, (double) constantPoolInfo.getDataMap().get(code.readU2Simple())));
+                        break;
+                    default:
+                        new Error("暂未支持的类型");
                 }
 
             }
         }
+    }
+
+    private static void invokeStaticMethod(MethodInfo methodInfo) {
+        JavaThread currentThread = Threads.getCurrentThread();
+
+    }
+
+    private static MethodInfo getmethodByMethoId(Klass klass, String methodName, String descriptorNameByMethodInfo) {
+        Map<Integer, Object> dataMap = klass.getConstantPoolInfo().getDataMap();
+        for (MethodInfo method : klass.getMethods()) {
+            if (method.getMethodName().equals(methodName) && descriptorNameByMethodInfo.equals(dataMap.get(method.getDescriptorIndex()))) {
+                return method;
+            }
+        }
+        return null;
+
     }
 
 }

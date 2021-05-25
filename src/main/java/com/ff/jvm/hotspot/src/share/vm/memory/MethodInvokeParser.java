@@ -4,18 +4,22 @@ import com.ff.jvm.hotspot.src.share.vm.runtime.JavaVFrame;
 import com.ff.jvm.hotspot.src.share.vm.utils.BasicType;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Data
+@Slf4j
 public class MethodInvokeParser {
 
 
     private String methodDescription;
 
     private ParameterDesc[] parameterDescs;
+
+    private String returnType;
 
 
     public MethodInvokeParser(String methodDescription) {
@@ -36,6 +40,8 @@ public class MethodInvokeParser {
         for (int j = 0; j < parameters.length(); j++) {
             char c = parameters.charAt(j);
             switch (c) {
+                case BasicType.JVM_SIGNATURE_FUNC:
+                    break;
                 case BasicType.JVM_SIGNATURE_ARRAY:
                     break;
                 case BasicType.JVM_SIGNATURE_BYTE:
@@ -83,6 +89,11 @@ public class MethodInvokeParser {
                 case BasicType.JVM_SIGNATURE_BOOLEAN:
                     parameterList.add(ParameterDesc.builder().klass(boolean.class).type(BasicType.JVM_SIGNATURE_CLASS).build());
                     break;
+                case BasicType.JVM_SIGNATURE_ENDFUNC:
+                    break;
+                default:
+                    log.info("未解析的参数类型：{}", c);
+                    throw new Error("未解析的参数类型");
             }
             parameterDescs = parameterList.toArray(new ParameterDesc[parameterList.size()]);
         }
@@ -100,9 +111,7 @@ public class MethodInvokeParser {
     }
 
     private void parseReturn(String returnDescription) {
-        if (returnDescription.charAt(0) == BasicType.JVM_SIGNATURE_INT) {
-
-        }
+        returnType = returnDescription;
     }
 
     @Data

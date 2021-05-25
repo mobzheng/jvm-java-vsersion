@@ -312,6 +312,8 @@ public class Klass {
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Double;
                     double doubleInfo = reader.readU8toDouble();
                     constantPoolInfo.getDataMap().put(i, doubleInfo);
+                    constantPoolInfo.getDataMap().put(++i, doubleInfo);
+                    // double 要占两个位置来进行存储
                     log.info("double[{}]", doubleInfo);
                     break;
                 case ConstantPool.JVM_CONSTANT_Float:
@@ -342,6 +344,7 @@ public class Klass {
                     this.constantPoolInfo.getTag()[i] = ConstantPool.JVM_CONSTANT_Long;
                     long constantLong = reader.readU8toLong();
                     constantPoolInfo.getDataMap().put(i, constantLong);
+                    constantPoolInfo.getDataMap().put(++i, constantLong);
                     log.info("long[{}]", constantLong);
                     break;
                 case ConstantPool.JVM_CONSTANT_NameAndType:
